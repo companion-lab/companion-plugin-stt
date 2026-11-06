@@ -9,6 +9,6 @@
     "download:models": "pnpm run download:stt && pnpm run download:lib"
   },
   "dependencies": {
-    "@companion/plugin": "file:./sdk/js/@companion/plugin"
+    "@companion-lab/plugin": "file:./sdk/js/@companion/plugin"
   }
 }
