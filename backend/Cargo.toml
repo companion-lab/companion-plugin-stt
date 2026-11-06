@@ -1,0 +1,31 @@
+[package]
+name = "stt-backend"
+version = "0.1.0"
+description = "STT (speech recognition) feature plugin backend for companion-tauri (Moonshine FFI + mic capture)"
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "stt_backend"
+crate-type = ["cdylib"]
+
+[dependencies]
+companion-plugin-sdk = { path = "../../sdk/rust/companion-plugin-sdk" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Mirrored from the host crate for parity; the ported engine code is fully
+# synchronous, so nothing in this plugin currently drives a tokio runtime.
+tokio = { version = "1", features = ["process", "io-util", "time", "sync", "rt", "macros"] }
+# Referenced in place (never moved/copied): the prebuilt libmoonshine.dylib
+# bundled with the plugin package.
+moonshine-sys = { path = "../moonshine-sys" }
+cpal = "0.15"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+block2 = "0.6"
+core-foundation = "0.9"
+libc = "0.2"
+
+[profile.release]
+strip = true

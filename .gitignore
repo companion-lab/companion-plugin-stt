@@ -1,0 +1,12 @@
+# Build outputs
+node_modules/
+target/
+dist/
+frontend.js
+
+# macOS
+.DS_Store
+
+# Downloaded models / native lib (see scripts/ and package.json)
+assets/
+moonshine-sys/lib/
