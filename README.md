@@ -17,13 +17,18 @@ host API documentation.
 | `backend/` | Rust cdylib backend (Moonshine FFI + mic capture) |
 | `moonshine-sys/` | FFI bindings crate for the Moonshine Voice C API |
 | `scripts/` | `download-moonshine-models.sh` — fetches the ONNX models |
-| `sdk/js/@companion/plugin` | Vendored frontend SDK (`@companion/plugin`) |
-| `sdk/rust/companion-plugin-sdk` | Vendored backend SDK crate (ABI, host bridge) |
 
 React is never bundled into the plugin: `react` / `react-dom` are aliased to
 the host's copies at build time, so plugin frontends always match the app.
 
 ## Building
+
+Install dependencies first (pulls `@companion-lab/plugin` from npm and `companion-plugin-sdk` from crates.io):
+
+```bash
+npm install
+```
+
 
 The `companion-plugin` CLI from the companion-tauri repo bundles the frontend
 (and builds the Rust backend when present) into a zip importable via the app's
@@ -31,7 +36,7 @@ The `companion-plugin` CLI from the companion-tauri repo bundles the frontend
 
 ```bash
 node /path/to/companion-tauri/plugin-cli/bin/companion-plugin.mjs build /path/to/companion-plugin-stt \
-  --backend --sdk /path/to/companion-plugin-stt/sdk/js/@companion/plugin
+  --backend
 ```
 
 Install dependencies first if you use a package manager lockfile

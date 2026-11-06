@@ -7,7 +7,7 @@
 // Runs in BOTH windows — each gets its own provider instance kept in sync
 // via localStorage + plugin events.
 
-import { definePlugin, type PluginContext } from "../../sdk/js/@companion/plugin";
+import { definePlugin, type PluginContext } from "@companion-lab/plugin";
 import { initSttSettings } from "./stt-settings";
 import { createSttProvider } from "./stt-provider";
 import { SttSettingsSection } from "./SttSettingsSection";

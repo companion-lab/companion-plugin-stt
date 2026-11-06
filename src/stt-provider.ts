@@ -14,7 +14,7 @@
 // from that dir on the first "stt.start_listening"/"stt.transcribe"/
 // "stt.create_stream" call (ensure_transcriber in the backend).
 
-import type { PluginContext, SttEngine, SttProvider } from "../../sdk/js/@companion/plugin";
+import type { PluginContext, SttEngine, SttProvider } from "@companion-lab/plugin";
 import { cloudTranscribe } from "./cloud-stt";
 
 export interface TranscriptWord {
