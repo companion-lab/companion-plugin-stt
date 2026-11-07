@@ -7,8 +7,11 @@
 // - emit    → invoke("plugin:event|emit", { event, payload })
 //
 // Used ONLY for host-global surfaces the plugin context cannot reach: the
-// legacy global keychain accounts (one-time migration) and the chat panel's
-// global "mic-active-changed" event. Everything else goes through ctx.*
+// legacy global keychain accounts (one-time migration), the chat panel's
+// global "mic-active-changed" event, and the shared ui-prefs blob (the Voice
+// Input section reads/writes localStorage "companion:ui" and emits the
+// host-global "ui-prefs-changed"; the mic shortcut also applies via the Rust
+// set_mic_shortcut command). Everything else goes through ctx.*
 
 interface TauriInternals {
   invoke: (cmd: string, args?: Record<string, unknown>, options?: unknown) => Promise<unknown>;
@@ -55,13 +58,24 @@ export function tauriListen<T = unknown>(
   const handlerId = t.transformCallback((e: unknown) => {
     handler((e as { payload?: T })?.payload as T);
   });
+    return t
+      .invoke("plugin:event|listen", { event, target: { kind: "Any" }, handler: handlerId })
+      .then((eventId) => {
+        return () => {
+          void t
+            .invoke("plugin:event|unlisten", { event, eventId })
+            .catch(() => {});
+        };
+      });
+}
+
+/** Emit a host-global (non-plugin-namespaced) Tauri event. */
+export function tauriEmit(event: string, payload?: unknown): Promise<void> {
+  const t = internals();
+  if (!t || typeof t.invoke !== "function") {
+    return Promise.reject(new Error("Tauri IPC unavailable (not running inside companion)"));
+  }
   return t
-    .invoke("plugin:event|listen", { event, target: { kind: "Any" }, handler: handlerId })
-    .then((eventId) => {
-      return () => {
-        void t
-          .invoke("plugin:event|unlisten", { event, eventId })
-          .catch(() => {});
-      };
-    });
+    .invoke("plugin:event|emit", { event, payload: payload ?? null })
+    .then(() => undefined);
 }

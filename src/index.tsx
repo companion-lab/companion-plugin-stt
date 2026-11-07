@@ -1,8 +1,11 @@
 // Speech Recognition feature plugin frontend (the `stt` plugin — carved from
 // the pre-split voice plugin): the Speech Recognition + Connection settings
-// sections and the SttProvider (local Moonshine + cloud). The mic lifecycle
-// reaction and preview playback that spanned both halves live in the tts
-// plugin; chat drives this plugin's engine through ctx.services.
+// sections, the General tab's Voice Input section (microphone shortcut + voice
+// interrupt, moved from the host InterfaceSection), the SttProvider (local
+// Moonshine + cloud), and the main-window MicShortcutController that owns the
+// host mic shortcut when the chat panel is absent. The mic lifecycle reaction
+// and preview playback that spanned both halves live in the tts plugin; chat
+// drives this plugin's engine through ctx.services.
 //
 // Runs in BOTH windows — each gets its own provider instance kept in sync
 // via localStorage + plugin events.
@@ -12,6 +15,8 @@ import { initSttSettings } from "./stt-settings";
 import { createSttProvider } from "./stt-provider";
 import { SttSettingsSection } from "./SttSettingsSection";
 import { SttCloudSection } from "./SttCloudSection";
+import { VoiceInputSection } from "./VoiceInputSection";
+import { MicShortcutController } from "./MicShortcutController";
 
 export default definePlugin((ctx: PluginContext) => {
   ctx.log.info("activating stt plugin");
@@ -62,9 +67,32 @@ export default definePlugin((ctx: PluginContext) => {
       return <SttCloudSection ctx={ctx} />;
     },
   });
+  // General tab: voice input prefs (mic shortcut + barge-in), order 105 to
+  // sit deterministically below the chat plugin's General cards (order 100).
+  ctx.settings.registerSection({
+    id: "general.voiceInput",
+    tabId: "general",
+    slot: "top",
+    order: 105,
+    component: function VoiceInputViaCtx() {
+      return <VoiceInputSection ctx={ctx} />;
+    },
+  });
 
   // Capability provider (both windows register — each window's services
   // registry needs the engine available there; consumers null-check).
   ctx.services.registerStt(createSttProvider(ctx));
   ctx.log.info("stt provider registered");
+
+  // Main window: fallback owner of the host mic shortcut ("mic-toggle").
+  // The chat panel handles it while mounted; this headless controller covers
+  // the chat-plugin-disabled case with a standalone capture session (see
+  // MicShortcutController).
+  ctx.main.registerWidget({
+    slot: "main.overlay",
+    order: 50,
+    component: function MicShortcutControllerViaCtx() {
+      return <MicShortcutController ctx={ctx} />;
+    },
+  });
 });
