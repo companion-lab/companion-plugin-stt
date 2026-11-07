@@ -3,16 +3,52 @@
 // cards moved to the tts plugin's Speech Synthesis section).
 // - State comes from this plugin's STT settings store (localStorage
 //   "companion:stt").
+// - The "Unload mic model when idle" field moved here from the vrm plugin's
+//   Graphics section: it configures this plugin's engine memory, and
+//   reads/writes the host perf state through the SDK's useSettingsState
+//   bridge (the host still owns perf persistence).
 // - UI kit components come from ctx.ui (the host's shared kit).
 
 import { useSyncExternalStore, type ChangeEvent } from "react";
 import type { PluginContext } from "../../../sdk/js/@companion/plugin";
+import { useSettingsState } from "../../../sdk/js/@companion/plugin";
 import {
   getSttSettings,
   saveSttSettings,
   subscribeSttSettings,
   type SttSettings,
 } from "./stt-settings";
+
+type PerfConfig = {
+  unload_stt_when_idle: boolean;
+};
+
+function Presets<T extends string>({
+  options,
+  active,
+  onPick,
+  format,
+}: {
+  options: readonly T[];
+  active: T;
+  onPick: (v: T) => void;
+  format?: (v: T) => string;
+}) {
+  return (
+    <div className="preset-bar">
+      {options.map((o) => (
+        <button
+          key={String(o)}
+          type="button"
+          onClick={() => onPick(o)}
+          className={`preset-btn ${o === active ? "preset-btn-active" : ""}`}
+        >
+          {format ? format(o) : String(o)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function EngineSwitch({ value, onPick }: {
   value: "local" | "cloud";
@@ -37,6 +73,8 @@ function EngineSwitch({ value, onPick }: {
 export function SttSettingsSection({ ctx }: { ctx: PluginContext }) {
   const stt = useSyncExternalStore(subscribeSttSettings, getSttSettings);
   const sttProvider = stt.sttProvider ?? "local";
+  const { perf, setPerf } = useSettingsState();
+  const onPerfChange = (next: PerfConfig) => setPerf(next);
 
   const onChange = (next: SttSettings) => saveSttSettings(next);
 
@@ -56,6 +94,18 @@ export function SttSettingsSection({ ctx }: { ctx: PluginContext }) {
             : "Local Moonshine runs fully on-device — no audio leaves your machine."}
         >
           <EngineSwitch value={sttProvider} onPick={(p: "local" | "cloud") => onChange({ ...stt, sttProvider: p })} />
+        </FormField>
+
+        <FormField
+          label="Unload mic model when idle"
+          hint="Drop the speech model from RAM after the mic stops. Next mic tap reloads it (a few seconds)."
+        >
+          <Presets
+            options={["on", "off"] as const}
+            active={perf.unload_stt_when_idle ? "on" : "off"}
+            onPick={(v) => onPerfChange({ ...perf, unload_stt_when_idle: v === "on" })}
+            format={(v) => (v === "on" ? "On" : "Off")}
+          />
         </FormField>
       </SectionCard>
 
