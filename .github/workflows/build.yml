@@ -42,7 +42,7 @@ jobs:
           # only for macOS arm64; the linux/windows tarballs ship shared /
           # import libs that a plugin zip cannot carry, so Apple Silicon is
           # the only platform that yields a self-contained, loadable plugin.
-          - { os: macos-14, platform: macos-arm64 }
+          - { os: macos-15, platform: macos-arm64 }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -55,9 +55,11 @@ jobs:
           node-version: 20
 
       # Only used when the repo has a pnpm lockfile; harmless otherwise.
+      # pnpm 12+ tolerates settings-only pnpm-workspace.yaml files (no
+      # `packages` field), which pnpm 9 rejects.
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 12
 
       - name: Install JS dependencies
         run: |
