@@ -84,10 +84,11 @@ export default definePlugin((ctx: PluginContext) => {
   ctx.services.registerStt(createSttProvider(ctx));
   ctx.log.info("stt provider registered");
 
-  // Main window: fallback owner of the host mic shortcut ("mic-toggle").
-  // The chat panel handles it while mounted; this headless controller covers
-  // the chat-plugin-disabled case with a standalone capture session (see
-  // MicShortcutController).
+  // Main window: owner of the mic global shortcut (this plugin registers it
+  // with the OS via the global-shortcut JS API and emits "mic-toggle" per
+  // press). The chat panel handles it while mounted; this headless controller
+  // covers the chat-plugin-disabled case with a standalone capture session
+  // (see MicShortcutController).
   ctx.main.registerWidget({
     slot: "main.overlay",
     order: 50,

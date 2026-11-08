@@ -8,10 +8,11 @@
 //
 // Used ONLY for host-global surfaces the plugin context cannot reach: the
 // legacy global keychain accounts (one-time migration), the chat panel's
-// global "mic-active-changed" event, and the shared ui-prefs blob (the Voice
-// Input section reads/writes localStorage "companion:ui" and emits the
-// host-global "ui-prefs-changed"; the mic shortcut also applies via the Rust
-// set_mic_shortcut command). Everything else goes through ctx.*
+// global "mic-active-changed" event, the shared ui-prefs blob (localStorage
+// "companion:ui" + the host-global "ui-prefs-changed" event), and the OS
+// global-shortcut registration for the mic toggle (plugin:global-shortcut|*
+// commands — capabilities already grant register/unregister/is-registered).
+// Everything else goes through ctx.*
 
 interface TauriInternals {
   invoke: (cmd: string, args?: Record<string, unknown>, options?: unknown) => Promise<unknown>;
@@ -78,4 +79,39 @@ export function tauriEmit(event: string, payload?: unknown): Promise<void> {
   return t
     .invoke("plugin:event|emit", { event, payload: payload ?? null })
     .then(() => undefined);
+}
+
+/** Shape of a global-shortcut press event (Rust `ShortcutJsEvent`). */
+export type ShortcutEvent = { shortcut: string; id: number; state: string };
+
+/**
+ * Register an OS-global shortcut and deliver press events to `onEvent`.
+ * Mirrors @tauri-apps/plugin-global-shortcut's JS guest: the handler rides an
+ * IPC channel, which serializes as the string `__CHANNEL__:<callbackId>` where
+ * the callback receives `{ index, message }` envelopes (order-preserving in
+ * @tauri-apps/api; presses carry no ordering concern, so `index` is ignored).
+ */
+export function globalShortcutRegister(
+  shortcut: string,
+  onEvent: (event: ShortcutEvent) => void,
+): Promise<void> {
+  const t = internals();
+  if (!t || typeof t.invoke !== "function" || typeof t.transformCallback !== "function") {
+    return Promise.reject(new Error("Tauri IPC unavailable (not running inside companion)"));
+  }
+  const callbackId = t.transformCallback((raw: unknown) => {
+    const message = (raw as { message?: ShortcutEvent } | null)?.message;
+    if (message) onEvent(message);
+  });
+  return t
+    .invoke("plugin:global-shortcut|register", {
+      shortcuts: [shortcut],
+      handler: `__CHANNEL__:${callbackId}`,
+    })
+    .then(() => undefined);
+}
+
+/** Unregister a previously registered OS-global shortcut. */
+export function globalShortcutUnregister(shortcut: string): Promise<void> {
+  return tauriInvoke<void>("plugin:global-shortcut|unregister", { shortcuts: [shortcut] });
 }

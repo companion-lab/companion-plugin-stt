@@ -5,8 +5,8 @@
 //   "companion:stt").
 // - The "Unload mic model when idle" field moved here from the vrm plugin's
 //   Graphics section: it configures this plugin's engine memory, and
-//   reads/writes the host perf state through the SDK's useSettingsState
-//   bridge (the host still owns perf persistence).
+//   reads/writes the shared perf state through the SDK's useSettingsState
+//   bridge (persistence lives in the vrm plugin backend).
 // - UI kit components come from ctx.ui (the host's shared kit).
 
 import { useSyncExternalStore, type ChangeEvent } from "react";
