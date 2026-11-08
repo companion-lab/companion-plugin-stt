@@ -42,6 +42,9 @@ use companion_plugin_sdk::{export_plugin, Plugin, PluginCtx};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
+// macOS-only: TCC mic-permission gate (objc2/block2/core-foundation/libc are
+// macOS target dependencies, so this module can't compile on other hosts).
+#[cfg(target_os = "macos")]
 mod mic_permission;
 mod moonshine;
 
