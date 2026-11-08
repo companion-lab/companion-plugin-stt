@@ -52,3 +52,29 @@ building the backend:
 pnpm install
 pnpm run download:models   # STT models + platform dylib
 ```
+
+## Downloading releases
+
+CI builds installable zips on every push to `main` (the "Build plugin"
+workflow). To publish a release, push a tag matching the version in
+`manifest.json`:
+
+```bash
+git tag v0.1.1 && git push origin v0.1.1
+```
+
+The release gets one zip per platform — download the one for your machine
+and import it in the Companion app via **Settings → Plugins → Import
+plugin…**:
+
+| File | Platform |
+|---|---|
+| `stt-0.1.1-macos-arm64.zip` | macOS (Apple Silicon) |
+
+Only Apple Silicon is packaged: the Moonshine native library the backend
+links is published as a static library for macOS arm64 only — the
+Linux/Windows artifacts are shared/import libraries that a self-contained
+plugin zip cannot carry.
+
+Non-tag runs of the workflow publish the same zips as run artifacts for
+testing. CI never touches the zips committed under `dist/`.
