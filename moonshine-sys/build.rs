@@ -94,9 +94,20 @@ fn main() {
             }
         }
         ("windows", _) => {
+            // The windows package has no moonshine.dll: moonshine ships as
+            // static archives (moonshine.lib + moonshine-utils.lib +
+            // ort-utils.lib + bin-tokenizer.lib) plus a dynamic onnxruntime
+            // (onnxruntime.lib import lib + onnxruntime.dll). All must be
+            // linked, or link.exe fails with unresolved moonshine/ORT
+            // symbols. The download script renames the hyphenated archive
+            // files to underscores so these -l names resolve.
             let win_lib = lib_dir.join("windows-x86_64");
             println!("cargo:rustc-link-search=native={}", win_lib.display());
-            println!("cargo:rustc-link-lib=dylib=moonshine");
+            println!("cargo:rustc-link-lib=static=moonshine");
+            println!("cargo:rustc-link-lib=static=moonshine_utils");
+            println!("cargo:rustc-link-lib=static=ort_utils");
+            println!("cargo:rustc-link-lib=static=bin_tokenizer");
+            println!("cargo:rustc-link-lib=dylib=onnxruntime");
 
             // Copy DLLs next to the binary
             let profile_dir = crate_dir

@@ -37,7 +37,13 @@ curl -f -L "https://github.com/moonshine-ai/moonshine/releases/download/${MOONSH
 tar xzf "$TMP/moonshine.tar.gz" -C "$TMP" --strip-components=1
 
 mkdir -p "$DEST"
-cp -v "$TMP"/lib/* "$DEST/"
+# Normalize hyphens to underscores in lib filenames: rustc -l names must be
+# identifier-safe and MSVC's linker lookup is verbatim, so the build script
+# links them as moonshine_utils etc.
+for f in "$TMP"/lib/*; do
+    base="$(basename "$f")"
+    cp -v "$f" "$DEST/${base//-/_}"
+done
 cp -v "$TMP"/include/moonshine-c-api.h "$(dirname "$DEST")/"
 
 echo "Done. Library at $DEST"
