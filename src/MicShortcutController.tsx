@@ -36,7 +36,7 @@
 //   no dead hotkey survives the plugin.
 
 import { useCallback, useEffect, useRef } from "react";
-import type { PluginContext, SttEngine } from "../../../sdk/js/@companion/plugin";
+import type { PluginContext, SttEngine } from "@companion-lab/plugin";
 import { loadSttSettings } from "./stt-settings";
 import {
   globalShortcutRegister,
