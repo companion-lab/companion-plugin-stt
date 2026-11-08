@@ -75,6 +75,13 @@ jobs:
             npm install
           fi
 
+      # Linux audio capture: cpal links ALSA (alsa-sys needs alsa.pc).
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev
+
       # Backend plugins compile a Rust cdylib; frontend-only plugins have no
       # backend/ and skip these steps.
       - uses: dtolnay/rust-toolchain@stable
