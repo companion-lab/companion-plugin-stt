@@ -190,7 +190,14 @@ pub fn responsible_app() -> Option<ResponsibleApp> {
                 });
             }
         }
-        pid = proc_parent_pid(pid)?;
+        // The walk ends at launchd (no parent) — keep whatever ancestor we
+        // already found instead of aborting the whole lookup here. Aborting
+        // made every dev denial claim the app "could not be identified",
+        // which also disabled the stale-denial tccutil recovery.
+        match proc_parent_pid(pid) {
+            Some(parent) => pid = parent,
+            None => break,
+        }
     }
     outermost
 }
@@ -386,6 +393,19 @@ mod tests {
     #[test]
     fn responsible_app_walks_ancestors() {
         let _ = responsible_app();
+    }
+
+    /// Regression: the walk must survive reaching launchd (pid 1 has no
+    /// parent) instead of aborting and discarding the .app ancestor it
+    /// already found.
+    #[test]
+    fn responsible_app_walks_past_launchd() {
+        let app = responsible_app();
+        assert!(
+            app.is_some(),
+            "no .app ancestor found — the walk aborted before reaching it"
+        );
+        eprintln!("responsible app: {} ({:?})", app.as_ref().unwrap().name, app.as_ref().unwrap().bundle_id);
     }
 
     /// The dev binary is not inside an .app bundle; the check must not
