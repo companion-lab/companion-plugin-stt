@@ -25,10 +25,9 @@ fn profile_dir() -> PathBuf {
 
 #[test]
 fn backend_loads_with_sidecar_preload() {
-    let profile = profile_dir();
     let mut backend_dll: Option<PathBuf> = None;
     let mut sidecars: Vec<PathBuf> = Vec::new();
-    for entry in std::fs::read_dir(&profile).expect("read target dir") {
+    for entry in std::fs::read_dir(profile_dir()).expect("read target dir") {
         let entry = entry.unwrap();
         let name = entry.file_name().to_string_lossy().to_string();
         if !name.to_ascii_lowercase().ends_with(".dll") {
@@ -40,12 +39,7 @@ fn backend_loads_with_sidecar_preload() {
             sidecars.push(entry.path());
         }
     }
-    // Diagnostics ride in the step summary (the raw CI job log is auth-gated).
-    eprintln!("profile dir: {}", profile.display());
-    eprintln!("backend dll: {:?}", backend_dll);
-    eprintln!("sidecar dlls: {:?}", sidecars);
-    let backend_dll =
-        backend_dll.expect("built backend cdylib not found in target dir (see eprintln above)");
+    let backend_dll = backend_dll.expect("built backend cdylib not found in target dir");
 
     // Stage exactly what a plugin zip hands the app: the backend lib plus
     // its sidecars, in a directory on no DLL search path.
@@ -53,7 +47,6 @@ fn backend_loads_with_sidecar_preload() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).expect("create staging dir");
     let staged_backend = tmp.join(backend_dll.file_name().unwrap());
-    eprintln!("backend dll source: {:?}", backend_dll);
     std::fs::copy(&backend_dll, &staged_backend).expect("copy backend cdylib");
     let mut staged_sidecars = Vec::new();
     for path in &sidecars {
@@ -66,14 +59,9 @@ fn backend_loads_with_sidecar_preload() {
     // import table's onnxruntime.dll reference resolves to the staged copy.
     let mut preload = Vec::new();
     for path in &staged_sidecars {
-        let lib = unsafe { Library::new(path) }
-            .map_err(|e| format!("pre-load sidecar {} failed: {e}", path.display()))
-            .expect("pre-load sidecar dll");
-        preload.push(lib);
+        preload.push(unsafe { Library::new(path) }.expect("pre-load sidecar dll"));
     }
-    let lib = unsafe { Library::new(&staged_backend) }
-        .map_err(|e| format!("load backend {} failed: {e}", staged_backend.display()))
-        .expect("load backend cdylib");
+    let lib = unsafe { Library::new(&staged_backend) }.expect("load backend cdylib");
 
     let abi: libloading::Symbol<extern "C" fn() -> u32> =
         unsafe { lib.get(b"companion_plugin_abi_version") }.expect("abi symbol");

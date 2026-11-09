@@ -158,25 +158,7 @@ jobs:
       # other platforms (the test file is cfg'd to Windows).
       - name: Windows backend load smoke test
         if: runner.os == 'Windows'
-        run: |
-          set +e
-          cargo test --manifest-path backend/Cargo.toml --release 2>&1 | tee stt-smoke-log.txt
-          status=${PIPESTATUS[0]}
-          # The job log is auth-gated; dump everything relevant into the run
-          # summary (visible signed-out) before failing the step.
-          {
-            echo "## Windows load smoke test"
-            echo
-            echo "- status code: $status"
-            echo "- target/release dlls:"
-            ls -la backend/target/release/*.dll 2>/dev/null || echo "  (none)"
-            echo
-            echo "- last 60 log lines:"
-            echo '```'
-            tail -60 stt-smoke-log.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
+        run: cargo test --manifest-path backend/Cargo.toml --release
 
       # Print the cdylib's shared-library dependencies so a release zip that
       # wouldn't load off the build machine is visible in the run log.
