@@ -29,8 +29,3 @@ libc = "0.2"
 
 [profile.release]
 strip = true
-
-[dev-dependencies]
-# Windows load smoke test (tests/load_smoke.rs) stages the cdylib and its
-# sidecar DLLs exactly the way the app's plugin host loads them.
-libloading = "0.8"

@@ -60,7 +60,7 @@ workflow). To publish a release, push a tag matching the version in
 `manifest.json`:
 
 ```bash
-git tag v0.1.2 && git push origin v0.1.2
+git tag v0.1.1 && git push origin v0.1.1
 ```
 
 The release gets one zip per platform — download the one for your machine
@@ -69,15 +69,12 @@ plugin…**:
 
 | File | Platform |
 |---|---|
-| `stt-0.1.2-macos-arm64.zip` | macOS (Apple Silicon) |
-| `stt-0.1.2-linux-x86_64.zip` | Linux (Intel/AMD 64-bit) |
-| `stt-0.1.2-windows-x86_64.zip` | Windows (64-bit) |
+| `stt-0.1.1-macos-arm64.zip` | macOS (Apple Silicon) |
 
-macOS statically links Moonshine's arm64 library, so its zip is
-self-contained. Linux and Windows link Moonshine's shared library / ONNX
-Runtime dynamically; those sidecar libraries ride along inside the zip
-(`assets/`) and the app's plugin loader places them next to the backend it
-loads, so the imports resolve.
+Only Apple Silicon is packaged: the Moonshine native library the backend
+links is published as a static library for macOS arm64 only — the
+Linux/Windows artifacts are shared/import libraries that a self-contained
+plugin zip cannot carry.
 
 Non-tag runs of the workflow publish the same zips as run artifacts for
 testing. CI never touches the zips committed under `dist/`.

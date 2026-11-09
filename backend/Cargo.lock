@@ -833,7 +833,6 @@ dependencies = [
  "core-foundation",
  "cpal",
  "libc",
- "libloading",
  "moonshine-sys",
  "objc2",
  "serde",
