@@ -1,6 +1,6 @@
 {
   "name": "companion-plugin-stt",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "description": "speech-recognition (STT) feature plugin for the Companion app.",
   "scripts": {

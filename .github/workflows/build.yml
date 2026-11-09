@@ -39,11 +39,13 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-latest,  platform: linux-x86_64 }
-          # moonshine-voice v0.1.5 ships a static library (libmoonshine.a)
-          # only for macOS arm64; the linux/windows tarballs ship shared /
-          # import libs that a plugin zip cannot carry, so Apple Silicon is
-          # the only platform that yields a self-contained, loadable plugin.
+          # macOS links moonshine's static arm64 archive (libmoonshine.a)
+          # into the cdylib, so the zip is self-contained. Linux/Windows
+          # link dynamic deps (libmoonshine.so, onnxruntime.dll) — the
+          # sidecar step below vends them into assets/ inside the zip, and
+          # the app's plugin loader copies them next to the cdylib it loads.
           - { os: macos-15, platform: macos-arm64 }
+          - { os: windows-latest, platform: windows-x86_64 }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -101,6 +103,23 @@ jobs:
         if: ${{ hashFiles('scripts/download-*.sh') != '' }}
         run: pnpm run download:models
 
+      # A zip can carry only one linked library (manifest.backend.library) —
+      # on Linux/Windows moonshine ships the rest as dynamic sidecar deps
+      # (libmoonshine.so + libonnxruntime.so.1 / onnxruntime.dll). Vendoring
+      # them into assets/ puts them inside the zip; the app's plugin loader
+      # copies them next to the cdylib it loads so the imports resolve.
+      - name: Vendor native sidecar libraries into assets
+        if: runner.os != 'macOS'
+        run: |
+          mkdir -p assets
+          case "$(uname -s)" in
+            MINGW*|MSYS*|CYGWIN*) cp moonshine-sys/lib/windows-x86_64/*.dll assets/ ;;
+            Linux*)               cp moonshine-sys/lib/linux-x86_64/lib*.so* assets/ ;;
+            Darwin)               exit 0 ;;
+            *) echo "::error::unknown OS for sidecar vendoring"; exit 1 ;;
+          esac
+          ls -la assets/
+
       - name: Read plugin manifest
         id: meta
         run: |
@@ -131,6 +150,15 @@ jobs:
           npx --yes companion-cli@latest build . \
             --out dist-ci \
             --name "${{ steps.meta.outputs.zip_name }}"
+
+      # Exercises the load pattern the app's plugin host uses on Windows:
+      # stage the cdylib + sidecar DLLs in a fresh dir, pre-load sidecars by
+      # absolute path, then load the cdylib — the import table's
+      # onnxruntime.dll reference must resolve. cargo test is a no-op on
+      # other platforms (the test file is cfg'd to Windows).
+      - name: Windows backend load smoke test
+        if: runner.os == 'Windows'
+        run: cargo test --manifest-path backend/Cargo.toml --release
 
       # Print the cdylib's shared-library dependencies so a release zip that
       # wouldn't load off the build machine is visible in the run log.
