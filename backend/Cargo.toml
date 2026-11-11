@@ -1,6 +1,6 @@
 [package]
 name = "stt-backend"
-version = "0.1.0"
+version = "0.3.0"
 description = "STT (speech recognition) feature plugin backend for companion-tauri (Moonshine FFI + mic capture)"
 license = "MIT"
 edition = "2021"
@@ -10,7 +10,7 @@ name = "stt_backend"
 crate-type = ["cdylib"]
 
 [dependencies]
-companion-plugin-sdk = "0.1"
+companion-plugin-sdk = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Mirrored from the host crate for parity; the ported engine code is fully

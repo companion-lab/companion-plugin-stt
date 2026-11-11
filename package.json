@@ -1,6 +1,6 @@
 {
   "name": "companion-plugin-stt",
-  "version": "0.1.2",
+  "version": "0.3.0",
   "private": true,
   "description": "speech-recognition (STT) feature plugin for the Companion app.",
   "scripts": {
@@ -9,6 +9,6 @@
     "download:models": "pnpm run download:stt && pnpm run download:lib"
   },
   "dependencies": {
-    "@companion-lab/plugin": "^0.1.0"
+    "@companion-lab/plugin": "^0.3.0"
   }
 }
