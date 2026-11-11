@@ -1,11 +1,13 @@
 // Speech Recognition feature plugin frontend (the `stt` plugin — carved from
-// the pre-split voice plugin): the Speech Recognition + Connection settings
-// sections, the General tab's Voice Input section (microphone shortcut + voice
-// interrupt, moved from the host InterfaceSection), the SttProvider (local
-// Moonshine + cloud), and the main-window MicShortcutController that owns the
-// host mic shortcut when the chat panel is absent. The mic lifecycle reaction
-// and preview playback that spanned both halves live in the tts plugin; chat
-// drives this plugin's engine through ctx.services.
+// the pre-split voice plugin): the Speech Recognition settings tab, its
+// cloud STT endpoint card on the Connection tab (the tab itself is owned by
+// the chat plugin), the General tab's Voice Input section (microphone
+// shortcut + voice interrupt, moved from the host InterfaceSection), the
+// SttProvider (local Moonshine + cloud), and the main-window
+// MicShortcutController that owns the host mic shortcut when the chat panel
+// is absent. The mic lifecycle reaction and preview playback that spanned
+// both halves live in the tts plugin; chat drives this plugin's engine
+// through ctx.services.
 //
 // Runs in BOTH windows — each gets its own provider instance kept in sync
 // via localStorage + plugin events.
@@ -25,10 +27,10 @@ export default definePlugin((ctx: PluginContext) => {
   // "companion:stt", keychain via ctx.secrets → stt:api-key).
   initSttSettings(ctx);
 
-  // Settings: the Speech Recognition tab is here; the shared Connection tab
-  // is registered by this plugin AND the tts plugin with the same id — the
-  // host's registry takes whichever registers first and both cloud cards
-  // render (sections are keyed by section id, not tab owner).
+  // Settings: the Speech Recognition tab is here; the Connection tab is
+  // registered by the chat plugin (the AI backend is its primary card) and
+  // this plugin's cloud STT card renders on it (sections are keyed by
+  // tabId, not tab owner).
   ctx.settings.registerTab({
     id: "stt",
     label: "Speech Recognition",
@@ -37,16 +39,6 @@ export default definePlugin((ctx: PluginContext) => {
     desc: "Speech recognition engine, wake word, and mic behavior.",
     icon: ({ className }: { className?: string }) => (
       <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-    ),
-  });
-  ctx.settings.registerTab({
-    id: "connection",
-    label: "Connection",
-    group: "Companion",
-    order: 15,
-    desc: "Speech endpoints and API keys.",
-    icon: ({ className }: { className?: string }) => (
-      <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
     ),
   });
   ctx.settings.registerSection({
