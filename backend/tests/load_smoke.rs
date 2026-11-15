@@ -15,12 +15,35 @@ use companion_plugin_sdk::ABI_VERSION;
 use libloading::Library;
 use std::path::PathBuf;
 
-/// `target/{profile}` — the test binary lives in its `deps` subdir.
+/// The directory holding the built backend cdylib: `target/{profile}`.
+///
+/// Historically test executables live in `target/{profile}/deps`, so walking
+/// up two levels found the profile dir. Recent cargo versions run them from
+/// `target/{profile}/build/<pkg>/<hash>/out` instead, so locate the profile
+/// dir by walking up from the test binary until we find the cdylib.
 fn profile_dir() -> PathBuf {
-    std::env::current_exe()
+    let mut dir = std::env::current_exe()
         .ok()
-        .and_then(|exe| exe.parent()?.parent().map(std::path::Path::to_path_buf))
-        .expect("current_exe must have a profile dir parent")
+        .and_then(|exe| exe.parent().map(std::path::Path::to_path_buf))
+        .expect("current_exe must have a parent dir");
+    loop {
+        let has_backend = std::fs::read_dir(&dir)
+            .map(|entries| {
+                entries
+                    .filter_map(Result::ok)
+                    .any(|e| {
+                        let name = e.file_name().to_string_lossy().to_lowercase();
+                        name.contains("backend") && name.ends_with(".dll")
+                    })
+            })
+            .unwrap_or(false);
+        if has_backend {
+            return dir;
+        }
+        if !dir.pop() {
+            panic!("no directory containing the backend cdylib above the test binary");
+        }
+    }
 }
 
 /// LoadLibrary on a freshly-copied DLL can transiently fail while Windows

@@ -2,6 +2,7 @@
 name = "stt-backend"
 version = "0.3.1"
 description = "STT (speech recognition) feature plugin backend for companion-tauri (Moonshine FFI + mic capture)"
+authors = ["Companion Lab"]
 license = "MIT"
 edition = "2021"
 
