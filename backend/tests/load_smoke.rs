@@ -23,6 +23,35 @@ fn profile_dir() -> PathBuf {
         .expect("current_exe must have a profile dir parent")
 }
 
+/// LoadLibrary on a freshly-copied DLL can transiently fail while Windows
+/// Defender/SmartScreen scans the new file (observed as flaky CI failures on
+/// an unchanged commit). Retry with backoff before giving up.
+fn load_with_retry(path: &std::path::Path) -> Library {
+    const ATTEMPTS: u32 = 6;
+    const DELAY: std::time::Duration = std::time::Duration::from_millis(1500);
+    let mut last_err = None;
+    for attempt in 1..=ATTEMPTS {
+        match unsafe { Library::new(path) } {
+            Ok(lib) => return lib,
+            Err(e) => {
+                eprintln!(
+                    "  load attempt {attempt}/{ATTEMPTS} failed for {}: {e}",
+                    path.display()
+                );
+                last_err = Some(e);
+                if attempt < ATTEMPTS {
+                    std::thread::sleep(DELAY);
+                }
+            }
+        }
+    }
+    panic!(
+        "loading {} failed after {ATTEMPTS} attempts: {}",
+        path.display(),
+        last_err.unwrap()
+    );
+}
+
 #[test]
 fn backend_loads_with_sidecar_preload() {
     let profile = profile_dir();
@@ -66,14 +95,10 @@ fn backend_loads_with_sidecar_preload() {
     // import table's onnxruntime.dll reference resolves to the staged copy.
     let mut preload = Vec::new();
     for path in &staged_sidecars {
-        let lib = unsafe { Library::new(path) }
-            .map_err(|e| format!("pre-load sidecar {} failed: {e}", path.display()))
-            .expect("pre-load sidecar dll");
+        let lib = load_with_retry(path);
         preload.push(lib);
     }
-    let lib = unsafe { Library::new(&staged_backend) }
-        .map_err(|e| format!("load backend {} failed: {e}", staged_backend.display()))
-        .expect("load backend cdylib");
+    let lib = load_with_retry(&staged_backend);
 
     let abi: libloading::Symbol<extern "C" fn() -> u32> =
         unsafe { lib.get(b"companion_plugin_abi_version") }.expect("abi symbol");

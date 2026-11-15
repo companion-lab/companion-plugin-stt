@@ -45,7 +45,10 @@ jobs:
           # sidecar step below vends them into assets/ inside the zip, and
           # the app's plugin loader copies them next to the cdylib it loads.
           - { os: macos-15, platform: macos-arm64 }
-          - { os: windows-latest, platform: windows-x86_64 }
+          # Pinned: windows-latest migrated to Windows Server 2025 (gradual
+          # rollout, Nov 2026) and the backend load smoke test broke on the
+          # new image while Server 2022 kept working. Revisit when fixed.
+          - { os: windows-2022, platform: windows-x86_64 }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
