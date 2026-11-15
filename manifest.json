@@ -14,5 +14,7 @@
   },
   "backend": {
     "library": "libstt_backend.dylib"
-  }
+  },
+  "versionCheckUrl": "https://github.com/companion-lab/companion-plugin-stt/releases/latest",
+  "updateUrl": "https://github.com/companion-lab/companion-plugin-stt/releases/latest/download/stt-{version}-{platform}.zip"
 }
