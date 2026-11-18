@@ -5,11 +5,15 @@
   "description": "speech-recognition (STT) feature plugin for the Companion app.",
   "author": "Companion Lab",
   "scripts": {
+    "test": "vitest run",
     "download:stt": "bash scripts/download-moonshine-models.sh",
     "download:lib": "bash moonshine-sys/scripts/download-lib.sh",
     "download:models": "pnpm run download:stt && pnpm run download:lib"
   },
   "dependencies": {
     "@companion-lab/plugin": "^0.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.5"
   }
 }
