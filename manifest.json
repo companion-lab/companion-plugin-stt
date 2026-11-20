@@ -3,7 +3,7 @@
   "name": "Speech Recognition",
   "version": "0.3.2",
   "description": "On-device STT (Moonshine) + cloud transcription, with a Speech Recognition settings tab and the cloud STT endpoint card.",
-  "abi": 2,
+  "abi": 3,
   "permissions": [
     "events",
     "secrets",
